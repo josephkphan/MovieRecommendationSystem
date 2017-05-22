@@ -1,6 +1,5 @@
 # MovieRecommendationSystem
 
-# Background Data
 ## The Training Data
 The training data: a set of movie ratings by 200 users (userid: 1-200) on 1000 movies (movieid:
 1-1000). The data is stored in a 200 row x 1000 column table. Each row represents one user.
