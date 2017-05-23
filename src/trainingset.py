@@ -148,12 +148,11 @@ class TrainingSet():
     def find_closest_users(self, user_vector):
 
         closest_users = [0] * 5  # top 5user_vector
-
+        threshold = .5
         for i in range(0, len(self.training_set)):
             value = self.cosine_similarity(self.training_set[i], user_vector)
-            if value > closest_users[0]:
+            if value > threshold:
                 closest_users.append((i, value))  #
-                closest_users = sorted(closest_users, key=lambda tup: tup[1])  # sort in increasing order
-                del closest_users[0]
+        closest_users = sorted(closest_users, key=lambda tup: tup[1])  # sort in increasing order
 
         return closest_users
