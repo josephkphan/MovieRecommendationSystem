@@ -9,12 +9,14 @@ class TrainingSet():
         self.movie_popularity = []  # Static Movie Popularity - no personalization
         self.movie_movie_similarity_matrix = []  # Keeps the similarity between every movie
         self.user_user_similarity_matrix = []
+        self.movie_ratings_count = []
         self.file_paths = {
             'training_set': '../data/json/training_set.json',
             'training_set_transposed': '../data/json/training_set_transposed.json',
             'movie_popularity': '../data/json/movie_popularity.json',
             'movie_movie_similarity_matrix': '../data/json/movie_movie_similarity_matrix.json',
-            'user_user_similarity_matrix': '../data/json/user_user_similarity_matrix.json'
+            'user_user_similarity_matrix': '../data/json/user_user_similarity_matrix.json',
+            'movie_ratings_count': '../data/json/movie_ratings_count.json'
         }
 
     # Will read from files and save to json
@@ -29,8 +31,10 @@ class TrainingSet():
         self.training_set = self.get_data_from_json_file(self.file_paths['training_set'])
         self.training_set_transposed = self.get_data_from_json_file(self.file_paths['training_set_transposed'])
         self.movie_popularity = self.get_data_from_json_file(self.file_paths['movie_popularity'])
-        self.movie_movie_similarity_matrix = self.get_data_from_json_file(self.file_paths['movie_movie_similarity_matrix'])
+        self.movie_movie_similarity_matrix = self.get_data_from_json_file(
+            self.file_paths['movie_movie_similarity_matrix'])
         self.user_user_similarity_matrix = self.get_data_from_json_file(self.file_paths['user_user_similarity_matrix'])
+        self.movie_ratings_count = self.get_data_from_json_file(self.file_paths['movie_ratings_count'])
 
     # Read Training data file and store data in self.training_set
     def read_training_file(self, file_path):
@@ -55,6 +59,15 @@ class TrainingSet():
         print len(self.training_set_transposed[0])
         self.save_data_to_json_file(self.training_set_transposed, self.file_paths['training_set_transposed'])
 
+    def create_movie_ratings_count_list(self):
+        for row in self.training_set_transposed:
+            counter = 0
+            for value in row:
+                if value != 0:
+                    counter += 1
+            self.movie_ratings_count.append(counter)
+        self.save_data_to_json_file(self.movie_ratings_count, self.file_paths['movie_ratings_count'])
+
     # Takes the Average Rating for every movie. This does not consider '0' or non-explicit ratings
     def create_movie_popularity_list(self):
         for i in range(0, len(self.training_set)):
@@ -72,20 +85,20 @@ class TrainingSet():
             # print len(self.movie_popularity)
             self.save_data_to_json_file(self.movie_popularity, self.file_paths['movie_popularity'])
 
-    def cosine_similarity(self,v1, v2):
-            # "compute cosine similarity of v1 to v2: (v1 dot v2)/{||v1||*||v2||)"
-            sumxx, sumxy, sumyy, cosine = 0, 0, 0, 0
-            for i in range(len(v1)):
-                x = v1[i];
-                y = v2[i]
-                sumxx += x * x
-                sumyy += y * y
-                sumxy += x * y
-                try:
-                    cosine = sumxy / math.sqrt(sumxx * sumyy)
-                except Exception, e:
-                    cosine = 0
-            return cosine
+    def cosine_similarity(self, v1, v2):
+        # "compute cosine similarity of v1 to v2: (v1 dot v2)/{||v1||*||v2||)"
+        sumxx, sumxy, sumyy, cosine = 0, 0, 0, 0
+        for i in range(len(v1)):
+            x = v1[i];
+            y = v2[i]
+            sumxx += x * x
+            sumyy += y * y
+            sumxy += x * y
+            try:
+                cosine = sumxy / math.sqrt(sumxx * sumyy)
+            except Exception, e:
+                cosine = 0
+        return cosine
 
     # Creates the cosine similarity matrix for Movie to Movie
     def create_movie_movie_similarity_matrix(self):
@@ -99,7 +112,8 @@ class TrainingSet():
                 print counter
                 list.append(self.cosine_similarity(self.training_set_transposed[i], self.training_set_transposed[j]))
             self.movie_movie_similarity_matrix.append(list)
-        self.save_data_to_json_file(self.movie_movie_similarity_matrix, self.file_paths['movie_movie_similarity_matrix'])
+        self.save_data_to_json_file(self.movie_movie_similarity_matrix,
+                                    self.file_paths['movie_movie_similarity_matrix'])
 
     # Creates the cosine similarity matrix for User to User
     def create_user_user_similarity_matrix(self):
@@ -129,4 +143,17 @@ class TrainingSet():
         except IOError as e:
             print 'could not read ' + file_path
 
+            #####################################################################################################
 
+    def find_closest_users(self, user_vector):
+
+        closest_users = [0] * 5  # top 5user_vector
+
+        for i in range(0, len(self.training_set)):
+            value = self.cosine_similarity(self.training_set[i], user_vector)
+            if value > closest_users[0]:
+                closest_users.append((i, value))  #
+                closest_users = sorted(closest_users, key=lambda tup: tup[1])  # sort in increasing order
+                del closest_users[0]
+
+        return closest_users
