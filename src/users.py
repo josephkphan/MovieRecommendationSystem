@@ -29,6 +29,9 @@ class Users():
         # print self.user
 
     def write_user_output_file(self):
+        """
+        create output file used for submission - adds prediction to input file
+        """
         out_file = open(self.output_file_path, 'w')
         with open(self.input_file_path) as in_file:
             for line in in_file:
