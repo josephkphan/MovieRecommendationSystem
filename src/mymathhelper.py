@@ -2,6 +2,7 @@
 from math import *
 from decimal import Decimal
 import math
+import numpy as np
 
 
 class MyMathHelper:
@@ -55,6 +56,10 @@ class MyMathHelper:
         return intersection_cardinality / float(union_cardinality)
 
     @staticmethod
+    def variance(v):
+        return np.var(v)
+
+    @staticmethod
     def common_dimensions(v1, v2):
         """ takes in two vectors and returns a tuple of the vectors with both non zero dimensions
         i.e.
@@ -100,7 +105,7 @@ class MyMathHelper:
 
     #############################################################################################################
 
-    # These functions
+    # These functions are my custom versions of common mathematical concepts
     @staticmethod
     def custom_rounding(value):
         """

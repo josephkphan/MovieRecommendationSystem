@@ -1,9 +1,12 @@
 from src.mymathhelper import *
 
 
-class Prediction():
+class Prediction:
     def __init__(self, training_set):
-        self.training_set = training_set
+        self.training_set = training_set.training_set
+        self.movie_variance = training_set.movie_variance
+        self.movie_popularity = training_set.movie_popularity
+        self.movie_ratings_count = training_set.movie_ratings_count
 
     def custom_all_static_weighted_average(self, user_cf_weight, movie_cf_weight, movie_popularity_weight,
                                            user_cf_value, movie_cf_value, movie_popularity):
@@ -14,8 +17,16 @@ class Prediction():
     ###############################################################################################################
     #                                               Movie Avg                                                     #
     ###############################################################################################################
-    def movie_average(self):
-        return 0
+    def movie_average(self, movie_index):
+        """Assumptions:
+            - If there is a lot of user ratings, the average movie rating is more reliable
+            - If there is a low variance, the average movie rating is more reliable
+            - If there is lot of user rating and low rating, the movie rating is very reliable
+        This is a rating Independent of what the user history and preferences - more on Trust Computing"""
+        percent_users_watched = self.movie_ratings_count[movie_index]/len(self.training_set)
+        movie_variance = self.movie_variance[movie_index]
+        # Idea - Dynamically adjust weight based on variance? If variance is low
+        return percent_users_watched * movie_variance
 
     ###############################################################################################################
     #                                                 Cosine                                                      #

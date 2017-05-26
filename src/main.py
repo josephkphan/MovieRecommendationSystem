@@ -8,7 +8,7 @@ import pprint
 training_set = TrainingSet()
 training_set.read_from_json()
 
-prediction = Prediction(training_set.training_set)
+prediction = Prediction(training_set)
 test_name = 'test5'
 user = Users(test_name + '.txt', 1000)
 k = 20
