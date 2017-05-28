@@ -53,6 +53,7 @@ class TrainingSet:
 
     def read_training_file(self, file_path):
         """ Read Training data file from input file and saves it in json format"""
+        self.training_set = []
         with open(file_path) as f:
             for line in f:
                 row = []
@@ -64,6 +65,7 @@ class TrainingSet:
 
     def create_net_training_file(self):
         """creates the matrix for the net values for self.training_set """
+        self.net_training_set = []
         for i in range(0, len(self.training_set)):
             my_list = MyMathHelper.net_list(self.training_set[i], self.user_ratings_count[i])
             self.net_training_set.append(my_list)
@@ -72,6 +74,7 @@ class TrainingSet:
     # Transposes Training set so its 1000 rows (# movies) and 200 columns (# users)
     def create_transposed_training_set(self):
         """transposes self.training set """
+        self.training_set_transposed = []
         for i in range(0, len(self.training_set[0])):
             my_list = []
             for j in range(0, len(self.training_set)):
@@ -81,6 +84,7 @@ class TrainingSet:
 
     def create_user_ratings_count_list(self):
         """  counts the number of movies that the user rated """
+        self.user_ratings_count = []
         for row in self.training_set:
             counter = MyMathHelper.nonzero_count(row)
             self.user_ratings_count.append(counter)
@@ -88,6 +92,7 @@ class TrainingSet:
 
     def create_movie_ratings_count_list(self):
         """ counts the number of users that rated the movie"""
+        self.movie_ratings_count = []
         for row in self.training_set_transposed:
             counter = 0
             for value in row:
@@ -99,21 +104,25 @@ class TrainingSet:
     def create_movie_popularity_list(self):
         """ This produces a list of the average ratings for every movie
          *Note: This average does not include the '0's or non-explicit ratings"""
-        for i in range(0, len(self.training_set)):
+        self.movie_popularity = []
+        for i in range(0, len(self.training_set_transposed)):
             counter = 0
             total_popularity = 0
-            for j in range(0, len(self.training_set[i])):
-                if self.training_set[i][j] != 0:
+            print len(self.training_set_transposed)
+
+            for j in range(0, len(self.training_set_transposed[i])):
+                if self.training_set_transposed[i][j] != 0:
                     counter += 1
-                    total_popularity += self.training_set[i][j]
+                    total_popularity += self.training_set_transposed[i][j]
             if counter == 0:
                 counter += 1
             avg = total_popularity / counter
             self.movie_popularity.append(avg)
-            MyJsonHandler.save_data_to_json_file(self.movie_popularity, self.file_paths['movie_popularity'])
+        MyJsonHandler.save_data_to_json_file(self.movie_popularity, self.file_paths['movie_popularity'])
 
     def create_movie_variance_list(self):
         """ Create a list of variances for the movie 2D List"""
+        self.movie_variance = []
         for i in range(0, len(self.training_set_transposed)):
             variance = MyMathHelper.variance(self.training_set_transposed[i])
             self.movie_variance.append(variance)
@@ -121,6 +130,7 @@ class TrainingSet:
 
     def create_movie_movie_similarity_matrix(self):
         """Creates the cosine similarity matrix for Movie to Movie and saves to json file"""
+        self.movie_movie_similarity_matrix = []
         counter = 0
         for i in range(0, len(self.training_set_transposed)):
             my_list = []
@@ -128,20 +138,21 @@ class TrainingSet:
                 counter += 1
                 print counter
                 my_list.append(MyMathHelper.custom_cosine_similarity(self.training_set_transposed[i],
-                                                                     self.training_set_transposed[j])[0])
+                                                                     self.training_set_transposed[j]))
             self.movie_movie_similarity_matrix.append(my_list)
         MyJsonHandler.save_data_to_json_file(self.movie_movie_similarity_matrix,
                                              self.file_paths['movie_movie_similarity_matrix'])
 
     def create_user_user_similarity_matrix(self):
         """Creates the cosine similarity matrix for User to User"""
+        self.user_user_similarity_matrix = []
         counter = 0
         for i in range(0, len(self.training_set)):
             my_list = []
             for j in range(0, len(self.training_set)):
                 counter += 1
                 print counter
-                my_list.append(MyMathHelper.custom_cosine_similarity(self.training_set[i], self.training_set[j])[0])
+                my_list.append(MyMathHelper.custom_cosine_similarity(self.training_set[i], self.training_set[j]))
             self.user_user_similarity_matrix.append(my_list)
         MyJsonHandler.save_data_to_json_file(self.user_user_similarity_matrix,
                                              self.file_paths['user_user_similarity_matrix'])

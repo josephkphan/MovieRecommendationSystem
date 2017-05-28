@@ -3,7 +3,7 @@ from math import *
 from decimal import Decimal
 import math
 import numpy as np
-
+from itertools import imap
 
 class MyMathHelper:
     """ Provides mathematical functions needed for my recommendation system """
@@ -74,7 +74,12 @@ class MyMathHelper:
         return list1, list2
 
     @staticmethod
-    def net_list(list, count):
+    def average(my_list):
+        avg = float(sum(my_list)) / float(len(my_list))
+        return avg
+
+    @staticmethod
+    def net_list(my_list, count):
         """
         Finds the average of the list
         count is used for the denominator for the average equation (# non zero values for list for movie case)
@@ -82,28 +87,42 @@ class MyMathHelper:
         list : [ 7  8  9]      average = 8     take value - average
         return [ -1 0  1]
         """
-        if len(list) == 0:  # Empty List
+        if len(my_list) == 0:  # Empty List
             return []
-        avg = sum(list) / count
+        avg = float(sum(my_list)) / float(count)
         net_list = []
-        for i in range(0, len(list)):
-            net_list.append(list[i] - avg)
+        for i in range(0, len(my_list)):
+            net_list.append(float(my_list[i]) - avg)
         return net_list
 
     @staticmethod
-    def nonzero_count(list):
+    def nonzero_count(my_list):
         """
         takes in a list an returns the amount of non zero values in the list
         i.e.
         list [0 0 0 0 1 2 3 ] --> returns 3
         """
         counter = 0
-        for value in list:
+        for value in my_list:
             if value != 0:
                 counter += 1
         return counter
 
     #############################################################################################################
+    @staticmethod
+    def iuf(number_total_users, number_users_rated_movie):
+        try:
+            return log10(number_total_users / number_users_rated_movie)
+        except Exception, e:
+            return 1
+
+    @staticmethod
+    def scale_list_by_iuf(my_list, number_total_users, movie_ratings_count_list):
+        scaled_list = []
+        for i in range(0,len(my_list)):
+            iuf_factor = MyMathHelper.iuf(number_total_users, movie_ratings_count_list[i])
+            scaled_list.append(my_list[i]*iuf_factor)
+        return scaled_list
 
     # These functions are my custom versions of common mathematical concepts
     @staticmethod
@@ -117,10 +136,6 @@ class MyMathHelper:
         elif value < 1:
             return 1
         return value
-
-    @staticmethod
-    def get_average(v):
-        return sum(v) / MyMathHelper.nonzero_count(v)
 
     @staticmethod
     def custom_case_amplification(value):
@@ -144,15 +159,16 @@ class MyMathHelper:
         if len(v1) == 0:
             print 'Zero Dimension'
             print 'Cos(0D): .001'
-            return 0.001, .001
+            return 0.001
         elif len(v1) == 1:
             print 'One Dimension'
             smaller_value = min(abs(v1[0]), abs(v2[0]))
             bigger_value = max(abs(v1[0]), abs(v2[0]))  # todo Check when to return a negative number (for pearson)
             value = 1.0 - (float(bigger_value) - float(smaller_value)) / 5
             print 'Cos(1D): ', value
-            value_after_scale = value * .22
-            return value, value_after_scale
+            # value_after_scale = value * .12
+            # print 'Final Sim:',value_after_scale
+            return value
         else:
             print 'Multiple Dimensions'
             sumxx, sumxy, sumyy, value = 0, 0, 0, 0
@@ -168,12 +184,29 @@ class MyMathHelper:
                 print 'Error in custom_cosine_similarity:', e
                 value = 0.001  # Edge case when denominator is 0
             print 'Cos(MD):', value
-            value_after_scale = value * math.log10(len(v1))
-            print 'Final Sim:',value_after_scale
-            return value, value_after_scale
+            # value_after_scale = value * math.log(len(v1), 100)
+            # print 'Final Sim:',value_after_scale
+            return value
 
     @staticmethod
-    def custom_pearson(v1, v2):
+    def custom_pearson(x, y):
         """calculate pearson coefficient"""
-        cosine_similarity = MyMathHelper.custom_cosine_similarity(v1, v2)[0]
-        return cosine_similarity  # Todo FINISH THIS
+        # Assume len(x) == len(y)
+        n = len(x)
+
+        if n == 0:
+            return 0
+        elif n == 1:
+            return 0        # Should we consider 1 dimensional case??
+        else:
+            sum_x = float(sum(x))
+            sum_y = float(sum(y))
+            sum_x_sq = sum(map(lambda x: pow(x, 2), x))
+            sum_y_sq = sum(map(lambda x: pow(x, 2), y))
+            psum = sum(imap(lambda x, y: x * y, x, y))
+            num = psum - (sum_x * sum_y/n)
+            den = pow((sum_x_sq - pow(sum_x, 2) / n) * (sum_y_sq - pow(sum_y, 2) / n), 0.5)
+            if den == 0: return 0
+            value = num / den
+            print 'Cos(MD): ', value
+            return value
