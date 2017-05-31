@@ -79,7 +79,7 @@ class MyMathHelper:
         return avg
 
     @staticmethod
-    def net_list(my_list, count):
+    def net_list(my_list, average):
         """
         Finds the average of the list
         count is used for the denominator for the average equation (# non zero values for list for movie case)
@@ -89,10 +89,9 @@ class MyMathHelper:
         """
         if len(my_list) == 0:  # Empty List
             return []
-        avg = float(sum(my_list)) / float(count)
         net_list = []
         for i in range(0, len(my_list)):
-            net_list.append(float(my_list[i]) - avg)
+            net_list.append(float(my_list[i]) - average)
         return net_list
 
     @staticmethod
@@ -107,6 +106,10 @@ class MyMathHelper:
             if value != 0:
                 counter += 1
         return counter
+
+    @staticmethod
+    def check_equal(my_list):
+        return my_list[1:] == my_list[:-1]
 
     #############################################################################################################
     @staticmethod
@@ -197,16 +200,42 @@ class MyMathHelper:
         if n == 0:
             return 0
         elif n == 1:
-            return 0        # Should we consider 1 dimensional case??
+            print 'One Dimension'
+            print 'X:', x
+            print 'Y:,', y
+            smaller_value = min(abs(x[0]), abs(y[0]))
+            bigger_value = max(abs(x[0]), abs(y[0]))  # todo Check when to return a negative number (for pearson)
+            value = 1.0 - (float(bigger_value) - float(smaller_value)) / 5
+            print 'Cos(1D): ', value
+            # value_after_scale = value * .12
+            # print 'Final Sim:',value_after_scale
+            return value
+        elif n == 2:
+            value = MyMathHelper.custom_cosine_similarity(x,y)
+            print 'Cos(MD):', value
+            return value
         else:
+
             sum_x = float(sum(x))
             sum_y = float(sum(y))
             sum_x_sq = sum(map(lambda x: pow(x, 2), x))
             sum_y_sq = sum(map(lambda x: pow(x, 2), y))
             psum = sum(imap(lambda x, y: x * y, x, y))
             num = psum - (sum_x * sum_y/n)
-            den = pow((sum_x_sq - pow(sum_x, 2) / n) * (sum_y_sq - pow(sum_y, 2) / n), 0.5)
-            if den == 0: return 0
-            value = num / den
-            print 'Cos(MD): ', value
-            return value
+            try:
+                den = pow((sum_x_sq - pow(sum_x, 2) / n) * (sum_y_sq - pow(sum_y, 2) / n), 0.5)
+                if den == 0: return 0
+                value = num / den
+                print 'Cos(MD): ', value
+                return value
+            except Exception, e:
+                print "Exception in custom pearson:", e
+                if MyMathHelper.check_equal(x):
+                    value = x[0]
+                elif MyMathHelper.check_equal(y):
+                    value = x[0]
+                else:
+                    print "WTF IS HAPPENING"
+                    value = 3
+                print 'Pearson(MD): ', value
+                return value

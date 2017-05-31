@@ -14,6 +14,8 @@ class TrainingSet:
         self.user_ratings_count = []
         self.movie_ratings_count = []
         self.movie_variance = []
+        self.training_set_iuf = []
+        self.user_average_rating = []
         self.file_paths = {
             'training_set': '../data/json/training_set.json',
             'training_set_transposed': '../data/json/training_set_transposed.json',
@@ -23,7 +25,9 @@ class TrainingSet:
             'movie_ratings_count': '../data/json/movie_ratings_count.json',
             'user_ratings_count': '../data/json/user_ratings_count.json',
             'net_training_set': '../data/json/net_training_set.json',
-            'movie_variance': '../data/json/movie_variance.json'
+            'movie_variance': '../data/json/movie_variance.json',
+            'training_set_iuf': '../data/json/training_set_iuf.json',
+            'user_average_rating': '../data/json/user_average_rating.json'
         }
 
     # Will read from files and save to json
@@ -37,6 +41,8 @@ class TrainingSet:
         self.create_user_ratings_count_list()
         self.create_movie_ratings_count_list()
         self.create_net_training_file()
+        self.create_training_set_iuf()
+        self.create_user_rating_avg()
 
     def read_from_json(self):
         """Already created Matrix - read from json file"""
@@ -47,9 +53,11 @@ class TrainingSet:
             self.file_paths['movie_movie_similarity_matrix'])
         self.user_user_similarity_matrix = MyJsonHandler.get_data_from_json_file(
             self.file_paths['user_user_similarity_matrix'])
-        self.movie_ratings_count = MyJsonHandler.get_data_from_json_file(self.file_paths['movie_ratings_count']),
-        self.user_ratings_count = MyJsonHandler.get_data_from_json_file(self.file_paths['user_ratings_count']),
+        self.movie_ratings_count = MyJsonHandler.get_data_from_json_file(self.file_paths['movie_ratings_count'])
+        self.user_ratings_count = MyJsonHandler.get_data_from_json_file(self.file_paths['user_ratings_count'])
         self.net_training_set = MyJsonHandler.get_data_from_json_file(self.file_paths['net_training_set'])
+        self.training_set_iuf = MyJsonHandler.get_data_from_json_file(self.file_paths['training_set_iuf'])
+        self.user_average_rating = MyJsonHandler.get_data_from_json_file(self.file_paths['user_average_rating'])
 
     def read_training_file(self, file_path):
         """ Read Training data file from input file and saves it in json format"""
@@ -82,6 +90,12 @@ class TrainingSet:
             self.training_set_transposed.append(my_list)
         MyJsonHandler.save_data_to_json_file(self.training_set_transposed, self.file_paths['training_set_transposed'])
 
+    def create_training_set_iuf(self):
+        self.training_set_iuf = []
+        for i in range(0,len(self.training_set)):
+            self.training_set_iuf.append(MyMathHelper.scale_list_by_iuf(self.training_set[i], len(self.training_set), self.movie_ratings_count[0]))
+        MyJsonHandler.save_data_to_json_file(self.training_set_iuf, self.file_paths['training_set_iuf'])
+
     def create_user_ratings_count_list(self):
         """  counts the number of movies that the user rated """
         self.user_ratings_count = []
@@ -89,6 +103,15 @@ class TrainingSet:
             counter = MyMathHelper.nonzero_count(row)
             self.user_ratings_count.append(counter)
         MyJsonHandler.save_data_to_json_file(self.user_ratings_count, self.file_paths['user_ratings_count'])
+
+    def create_user_rating_avg(self):
+        """ """
+        self.user_average_rating = []
+        for row in self.training_set:
+            counter = MyMathHelper.nonzero_count(row)
+            total = sum(row)
+            self.user_average_rating.append(float(total) / float(counter))
+        MyJsonHandler.save_data_to_json_file(self.user_average_rating, self.file_paths['user_average_rating'])
 
     def create_movie_ratings_count_list(self):
         """ counts the number of users that rated the movie"""
@@ -116,7 +139,7 @@ class TrainingSet:
                     total_popularity += self.training_set_transposed[i][j]
             if counter == 0:
                 counter += 1
-            avg = total_popularity / counter
+            avg = float(total_popularity) / float(counter)
             self.movie_popularity.append(avg)
         MyJsonHandler.save_data_to_json_file(self.movie_popularity, self.file_paths['movie_popularity'])
 
@@ -137,8 +160,15 @@ class TrainingSet:
             for j in range(0, len(self.training_set_transposed)):
                 counter += 1
                 print counter
-                my_list.append(MyMathHelper.custom_cosine_similarity(self.training_set_transposed[i],
-                                                                     self.training_set_transposed[j]))
+                v1 = []
+                v2 = []
+                # Gets net list and subtract the average user rating from the list
+                for k in range(0, len(self.training_set_transposed[i])):
+                    if self.training_set_transposed[i][k] != 0 and self.training_set_transposed[j][k] != 0:
+                        v1.append(float(self.training_set_transposed[i][k]) - float(self.user_average_rating[k]))
+                        v2.append(float(self.training_set_transposed[j][k]) - float(self.user_average_rating[k]))
+                my_list.append(MyMathHelper.custom_cosine_similarity(v1,v2))
+                # print 'v1:', v1, '\nv2:', v2
             self.movie_movie_similarity_matrix.append(my_list)
         MyJsonHandler.save_data_to_json_file(self.movie_movie_similarity_matrix,
                                              self.file_paths['movie_movie_similarity_matrix'])
@@ -152,7 +182,11 @@ class TrainingSet:
             for j in range(0, len(self.training_set)):
                 counter += 1
                 print counter
-                my_list.append(MyMathHelper.custom_cosine_similarity(self.training_set[i], self.training_set[j]))
+                temp = MyMathHelper.common_dimensions(self.training_set[i],self.training_set[j])
+                v1 = temp[0]
+                v2 = temp[1]
+
+                my_list.append(MyMathHelper.custom_cosine_similarity(v1, v2))
             self.user_user_similarity_matrix.append(my_list)
         MyJsonHandler.save_data_to_json_file(self.user_user_similarity_matrix,
                                              self.file_paths['user_user_similarity_matrix'])
