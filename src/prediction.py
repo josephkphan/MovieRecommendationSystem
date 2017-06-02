@@ -1,5 +1,5 @@
 from src.mymathhelper import *
-
+import pprint
 
 class Prediction:
     def __init__(self, training_set):
@@ -101,7 +101,8 @@ class Prediction:
         """
         This is the Kth- nearest neighbor algorithm
         """
-        closest_users = [(0, 0, 0, 0, 0, 0, 0)] * k  # top K user
+        closest_users = [(0, 0, 0, 0, 0, 0, 0,0,0,0)] * k  # top K user
+        avg_test_user_common_dimension = None
         for i in range(0, len(self.training_set)):
             if self.training_set[i][movie_index] != 0:  # Makes sure the user has that movie rating
                 # Scales by IUF
@@ -114,32 +115,42 @@ class Prediction:
                 temp = MyMathHelper.common_dimensions(v1, v2)
                 v1 = temp[0]
                 v2 = temp[1]
+
+                if(len(v1)) == 0 or len(v1)==1:
+                    continue
+                avg_train_user_common_dimension = MyMathHelper.average(v1)
+                avg_test_user_common_dimension = MyMathHelper.average(v2)
+                print '--------------------------------------------------'
                 print 'v1:', v1, '\nv2:', v2
 
                 # Finds Net List
                 v1 = MyMathHelper.net_list(v1,self.user_average_rating[i])
                 user_vector_avg = sum(user_vector) / MyMathHelper.nonzero_count(user_vector)
                 v2 = MyMathHelper.net_list(v2, user_vector_avg)
+                print 'AFTER\nv1:', v1, '\nv2:', v2
 
-                value = MyMathHelper.custom_pearson(v1, v2)
-
-                if(len(v1)) == 0 or (len(v1) == 1):
-                    continue
-                elif len(v2) == 2:
-                    value = MyMathHelper.custom_cosine_similarity(v1,v2)
+                value = MyMathHelper.custom_cosine_similarity(v1, v2)
 
                 if abs(value) > abs(closest_users[0][1]):  # Absolute Value
                     del closest_users[0]  # Delete smallest value
                     training_set_user_avg = self.user_average_rating[i]
                     testing_user_avg = float(sum(user_vector))/float(MyMathHelper.nonzero_count(user_vector))
                     training_set_user_movie_score = self.training_set[i][movie_index]
+                    compare_value = abs(value)
                     closest_users.append((i, value, training_set_user_movie_score,
                                                    training_set_user_avg,
                                                    testing_user_avg,
-                                                   v1, v2))  # Add new value to end
+                                                   v1, v2, compare_value,
+                                                    avg_train_user_common_dimension,
+                                                    avg_test_user_common_dimension))  # Add new value to end
                     # print closest_users
-                    closest_users = sorted(closest_users, key=lambda tup: tup[1])  # sort in increasing order
-        return closest_users
+                    closest_users = sorted(closest_users, key=lambda tup: tup[7])  # sort in increasing order
+
+                    print ' value:',value
+                    print ' training_set_user_movie_score:',training_set_user_movie_score
+                    print ' avg_train_user_common_dimension:',avg_train_user_common_dimension
+                    print ' avg_test_user_common_dimension:',avg_test_user_common_dimension
+        return closest_users, avg_test_user_common_dimension
 
     def user_user_pearson(self, user_vector, movie, k):
         """
@@ -147,24 +158,30 @@ class Prediction:
         k = top k for nearest neighbor algorithm
         movie - movie index to only include close users that rated that specific movie
         """
-        closest_users = self.find_closest_users_pearson(user_vector, movie, k)
-        print closest_users
+        temp= self.find_closest_users_pearson(user_vector, movie, k)
+        closest_users = temp[0]
+        testing_user_avg = None
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(closest_users)
+        # print closest_users
         prediction = 0
         denominator = 0
         for u in closest_users:
             weight = u[1]
             # weight = MyMathHelper.custom_case_amplification(weight)
             training_set_user_movie_score = u[2]
+            # training_set_user_avg = u[8]
+            # testing_user_avg = u[9]
             training_set_user_avg = u[3]
             testing_user_avg = u[4]
             if weight != 0:
                 denominator += abs(weight)
-                prediction += (testing_user_avg +
-                               ((weight * (training_set_user_movie_score - training_set_user_avg)) / abs(weight)))
+                prediction += ((weight * (training_set_user_movie_score - training_set_user_avg)))
         if denominator == 0:
-            print training_set_user_avg
-            return training_set_user_avg
+            p = float(sum(user_vector)) / float(MyMathHelper.nonzero_count(user_vector))
+            return p
         prediction /= denominator
+        prediction += testing_user_avg
         return prediction
 
 
@@ -226,7 +243,8 @@ class Prediction:
             for u in closest_users[dimension]:
                 if u == (0, 0, 0, 0, 0):
                     continue
-                weight = MyMathHelper.custom_case_amplification(u[1])
+                # weight = MyMathHelper.custom_case_deamplification(u[1])
+                weight =u[1]
                 movie_rating = u[2]
                 prediction[dimension] = prediction[dimension] + (weight * movie_rating)
                 denominator[dimension] = denominator[dimension] + weight
@@ -271,32 +289,46 @@ class Prediction:
                 temp = MyMathHelper.common_dimensions(v1, v2)
                 v1 = temp[0]
                 v2 = temp[1]
+
+                if(len(v1)) == 0 or len(v1)==1:
+                    continue
+                avg_train_user_common_dimension = MyMathHelper.average(v1)
+                avg_test_user_common_dimension = MyMathHelper.average(v2)
+                print '--------------------------------------------------'
                 print 'v1:', v1, '\nv2:', v2
 
                 # Finds Net List
-                v1 = MyMathHelper.net_list(v1, len(v1))
-                v2 = MyMathHelper.net_list(v2, len(v2))
-                print 'After Netting:'
-                print 'v1:', v1, '\nv2:', v2
+                v1 = MyMathHelper.net_list(v1,self.user_average_rating[i])
+                user_vector_avg = sum(user_vector) / MyMathHelper.nonzero_count(user_vector)
+                v2 = MyMathHelper.net_list(v2, user_vector_avg)
+                print 'AFTER\nv1:', v1, '\nv2:', v2
 
-                value = MyMathHelper.custom_pearson(v1, v2)
-                if len(v1) == 0 or len(v1) == 1:  # todo Skipping vector length 1 cases
+                value = MyMathHelper.custom_cosine_similarity(v1, v2)
+
+                if len(v1) == 0:  # todo Skipping vector length 1 cases
                     continue
                 if len(v1) not in closest_users:
-                    closest_users[len(v1)] = [(0, 0, 0, 0, 0, 0, 0)] * k
+                    closest_users[len(v1)] = [(0, 0, 0, 0, 0, 0, 0,0,0,0)] * k
                 print closest_users
-                if abs(value) > closest_users[len(v1)][0][1]:  # Absolute Value
+                if abs(value) > abs(closest_users[len(v1)][0][1]):  # Absolute Value
                     del closest_users[len(v1)][0]  # Delete smallest value
-                    training_set_user_avg = MyMathHelper.average(self.training_set[i])
-                    testing_user_avg = MyMathHelper.average(user_vector)
+                    training_set_user_avg = self.user_average_rating[i]
+                    testing_user_avg = float(sum(user_vector))/float(MyMathHelper.nonzero_count(user_vector))
                     training_set_user_movie_score = self.training_set[i][movie_index]
+                    compare_value = abs(value)
                     closest_users[len(v1)].append((i, value, training_set_user_movie_score,
                                                    training_set_user_avg,
                                                    testing_user_avg,
-                                                   v1, v2))  # Add new value to end
+                                                   v1, v2, compare_value,
+                                                    avg_train_user_common_dimension,
+                                                    avg_test_user_common_dimension))  # Add new value to end
                     # print closest_users
                     closest_users[len(v1)] = sorted(closest_users[len(v1)],
-                                                    key=lambda tup: tup[1])  # sort in increasing order
+                                                    key=lambda tup: tup[7])  # sort in increasing order
+                    print ' value:',value
+                    print ' training_set_user_movie_score:',training_set_user_movie_score
+                    print ' avg_train_user_common_dimension:',avg_train_user_common_dimension
+                    print ' avg_test_user_common_dimension:',avg_test_user_common_dimension
         return closest_users
 
     def pearson_top_k_per_dimension_similarity(self, user_vector, movie_index, k):
@@ -309,24 +341,28 @@ class Prediction:
         print 'Closest users:', closest_users
         prediction = {}
         denominator = {}
+        testing_user_avg = None
         for dimension in closest_users:
             prediction[dimension] = 0
             denominator[dimension] = 0
             for u in closest_users[dimension]:
-                if u == (0, 0, 0, 0, 0, 0, 0):
+                if u == (0, 0, 0, 0, 0, 0, 0,0,0,0):
                     continue
-                weight = MyMathHelper.custom_case_amplification(u[1])
+                weight = u[1]
+                # weight = MyMathHelper.custom_case_amplification(weight)
                 training_set_user_movie_score = u[2]
+                # training_set_user_avg = u[8]
+                # testing_user_avg = u[9]
                 training_set_user_avg = u[3]
                 testing_user_avg = u[4]
 
-                if weight == 0:
-                    continue
-                prediction[dimension] = prediction[dimension] + (testing_user_avg +
-                        ((weight * (training_set_user_movie_score - training_set_user_avg)) / abs(weight)))
-                denominator[dimension] = denominator[dimension] + abs(weight)
+                if weight != 0:
+                    denominator[dimension] += abs(weight)
+                    prediction[dimension] += ((weight * (training_set_user_movie_score - training_set_user_avg)))
+
             try:
-                prediction[dimension] = prediction[dimension] / denominator[dimension]
+                prediction[dimension] /= denominator[dimension]
+                prediction[dimension] += testing_user_avg
             except Exception, e:
                 print 'Error in user_user_cosine_similarity:', e
                 prediction[dimension] = 3
@@ -341,7 +377,9 @@ class Prediction:
         try:
             final_prediction /= total_weight
         except Exception, e:
-            return 3  # todo cold start problem! Movie never been rated
+            value = float(sum(user_vector)) / float(MyMathHelper.nonzero_count(user_vector))
+            print 'Prediction (from user avg):',value
+            return value
         return final_prediction
 
     ###############################################################################################################
@@ -385,17 +423,15 @@ class Prediction:
         denominator = 0
         for u in closest_users:
             weight = u[1]
+            movie_rating = u[2]
             # weight = MyMathHelper.custom_case_amplification(weight)
-            training_set_user_movie_score = u[2]
-            training_set_user_avg = u[3]
-            testing_user_avg = u[4]
             if weight != 0:
-                denominator += abs(weight)
-                prediction += (testing_user_avg +
-                               ((weight * (training_set_user_movie_score - training_set_user_avg)) / abs(weight)))
+                prediction += (weight * movie_rating)
+                denominator += weight
         if denominator == 0:
-            print training_set_user_avg
-            return training_set_user_avg
+            value = float(sum(user_vector)) / float(MyMathHelper.nonzero_count(user_vector))
+            print 'Prediction (from user avg):',value
+            return value
         prediction /= denominator
         return prediction
 
@@ -403,7 +439,7 @@ class Prediction:
         """
         This is the Kth- nearest neighbor algorithm
         """
-        closest_users = [(0, 0, 0, 0, 0, 0, 0)] * k  # top K user
+        closest_users = []
         for i in range(0, len(self.training_set)):
             if self.training_set[i][movie_index] != 0:  # Makes sure the user has that movie rating
                 # Scales by IUF
@@ -416,28 +452,24 @@ class Prediction:
                 v2 = temp[1]
                 print 'v1:', v1, '\nv2:', v2
 
-                # Finds Net List
-                v1 = MyMathHelper.net_list(v1,self.user_average_rating[i])
-                user_vector_avg = sum(user_vector) / MyMathHelper.nonzero_count(user_vector)
-                v2 = MyMathHelper.net_list(v2, user_vector_avg)
-
-                value = MyMathHelper.manhattan_distance(v1, v2)
+                # # Finds Net List
+                # v1 = MyMathHelper.net_list(v1,self.user_average_rating[i])
+                # user_vector_avg = sum(user_vector) / MyMathHelper.nonzero_count(user_vector)
+                # v2 = MyMathHelper.net_list(v2, user_vector_avg)
 
                 if(len(v1)) == 0:
                     continue
-                elif len(v2) == 2:
-                    value = value * MyMathHelper.manhattan_distance(v1,v2)
+                value = MyMathHelper.manhattan_distance(v1, v2) / len(v1)
+                value = 1/ (value + 1)
+                training_set_user_movie_score = self.training_set[i][movie_index]
 
-                if abs(value) > closest_users[0][1]:  # Absolute Value
+                if len(closest_users) < k:
+                    closest_users.append((i, value, training_set_user_movie_score,v1, v2))  # Add new value to end
+
+                if value < closest_users[0][1] or (value == closest_users[0][1] and len(v1) > len(closest_users[0][3])):  # Absolute Value
                     del closest_users[0]  # Delete smallest value
-                    training_set_user_avg = MyMathHelper.average(self.training_set[i])
-                    testing_user_avg = MyMathHelper.average(user_vector)
-                    training_set_user_movie_score = self.training_set[i][movie_index]
-                    closest_users.append((i, value, training_set_user_movie_score,
-                                                   training_set_user_avg,
-                                                   testing_user_avg,
-                                                   v1, v2))  # Add new value to end
+                    closest_users.append((i, value, training_set_user_movie_score,v1, v2))  # Add new value to end
                     # print closest_users
-                    closest_users = sorted(closest_users, key=lambda tup: tup[1])  # sort in increasing order
+                closest_users = sorted(closest_users, key=lambda tup: tup[1])  # sort in increasing order
         return closest_users
 

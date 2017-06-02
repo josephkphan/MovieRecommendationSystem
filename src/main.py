@@ -11,7 +11,8 @@ training_set.read_from_json()
 prediction = Prediction(training_set)
 test_name = 'test20'
 user = Users(test_name + '.txt', 1000)
-k = 10
+k = 8
+# 8 best for top k
 
 pp = pprint.PrettyPrinter(indent=4)
 pp.pprint(user.user_prediction_queue)
@@ -21,15 +22,16 @@ predictions = {}
 for u in user.user_prediction_queue:
     if u not in predictions:
         predictions[u] = []
-    print u
+    print 'USER:',u
     print user.user_vector[u]
     for missing_movie_prediction in user.user_prediction_queue[u]:
-        # p = prediction.user_user_cosine_similarity(user.user_vector[u], int(missing_movie_prediction) - 1, 5)
-        # p = prediction.user_user_pearson(user.user_vector[u], int(missing_movie_prediction) - 1, 5)
-        # p = prediction.top_k_per_dimension_similarity(user.user_vector[u], int(missing_movie_prediction) - 1, 5)
-        # p = prediction.pearson_top_k_per_dimension_similarity(user.user_vector[u], int(missing_movie_prediction) - 1, 5)
+        # p = prediction.user_user_cosine_similarity(user.user_vector[u], int(missing_movie_prediction) - 1, k)
+        # p = prediction.user_user_pearson(user.user_vector[u], int(missing_movie_prediction) - 1, k)
+        # p = prediction.top_k_per_dimension_similarity(user.user_vector[u], int(missing_movie_prediction) - 1, k)
+        p = prediction.pearson_top_k_per_dimension_similarity(user.user_vector[u], int(missing_movie_prediction) - 1, k)
         #p = prediction.user_user_pearson(user.user_vector[u], int(missing_movie_prediction) - 1, k)
-        p = prediction.item_based_cosine_similarity(user.user_vector[u], int(missing_movie_prediction) - 1)
+        # p = prediction.item_based_cosine_similarity(user.user_vector[u], int(missing_movie_prediction) - 1)
+        # p = prediction.user_user_manhattan(user.user_vector[u], int(missing_movie_prediction) - 1, k)
         print 'Final Prediction:',p
         p = MyMathHelper.custom_rounding(p)
         print 'Rounded Prediction:', p

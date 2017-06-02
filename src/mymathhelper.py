@@ -153,6 +153,19 @@ class MyMathHelper:
         return result
 
     @staticmethod
+    def custom_case_deamplification(value):
+        """case amplifies value - basically taking an exponential to a constant 2.5"""
+        bool_negative = False
+        if value < 0:
+            bool_negative = True
+
+        result = abs(value) ** .8
+        if bool_negative:
+            result *= -1
+        return result
+
+
+    @staticmethod
     def custom_cosine_similarity(v1, v2):
         """
         compute cosine similarity of v1 to v2: (v1 dot v2)/{||v1||*||v2||)
@@ -165,9 +178,10 @@ class MyMathHelper:
             return 0.001
         elif len(v1) == 1:
             print 'One Dimension'
-            smaller_value = min(abs(v1[0]), abs(v2[0]))
-            bigger_value = max(abs(v1[0]), abs(v2[0]))  # todo Check when to return a negative number (for pearson)
-            value = 1.0 - (float(bigger_value) - float(smaller_value)) / 5
+            # smaller_value = min(abs(v1[0]), abs(v2[0]))
+            # bigger_value = max(abs(v1[0]), abs(v2[0]))  # todo Check when to return a negative number (for pearson)
+            # value = 1.0 - (float(bigger_value) - float(smaller_value)) / 5
+            value = 1/(abs(v1[0] - v2[0])+1)
             print 'Cos(1D): ', value
             # value_after_scale = value * .12
             # print 'Final Sim:',value_after_scale
