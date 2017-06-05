@@ -1,3 +1,6 @@
+# Created by Joseph Phan
+# Movie Recommendation Project using item & user collaborative filtering algorithms & KNN
+
 from src.trainingset import *
 from src.users import *
 from src.prediction import *
@@ -11,7 +14,7 @@ training_set.read_from_json()
 prediction = Prediction(training_set)
 test_name = 'test20'
 user = Users(test_name + '.txt', 1000)
-k = 8
+k = 100
 # 8 best for top k
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -25,10 +28,10 @@ for u in user.user_prediction_queue:
     print 'USER:',u
     print user.user_vector[u]
     for missing_movie_prediction in user.user_prediction_queue[u]:
-        # p = prediction.user_user_cosine_similarity(user.user_vector[u], int(missing_movie_prediction) - 1, k)
+        p = prediction.user_user_cosine_similarity(user.user_vector[u], int(missing_movie_prediction) - 1, k)
         # p = prediction.user_user_pearson(user.user_vector[u], int(missing_movie_prediction) - 1, k)
         # p = prediction.top_k_per_dimension_similarity(user.user_vector[u], int(missing_movie_prediction) - 1, k)
-        p = prediction.pearson_top_k_per_dimension_similarity(user.user_vector[u], int(missing_movie_prediction) - 1, k)
+        # p = prediction.pearson_top_k_per_dimension_similarity(user.user_vector[u], int(missing_movie_prediction) - 1, k)
         #p = prediction.user_user_pearson(user.user_vector[u], int(missing_movie_prediction) - 1, k)
         # p = prediction.item_based_cosine_similarity(user.user_vector[u], int(missing_movie_prediction) - 1)
         # p = prediction.user_user_manhattan(user.user_vector[u], int(missing_movie_prediction) - 1, k)

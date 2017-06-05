@@ -1,58 +1,36 @@
 # MovieRecommendationSystem
 
-## The Training Data
-The training data: a set of movie ratings by 200 users (userid: 1-200) on 1000 movies (movieid:
-1-1000). The data is stored in a 200 row x 1000 column table. Each row represents one user.
-Each column represents one movie. A rating is a value in the range of 1 to 5, where 1 is "least
-favored" and 5 is "most favored". Please NOTE that a value of 0 means that the user has not
-explicitly rated the movie.
+## Setup
+ - run command 'python main.py' to run the program
+ - Changing algorithm in the commented section inside main.py
 
-## Test Data
-[test5.txt] A pool of movie ratings by 100 users (userid: 201-300). Each user has already rated 5
-movies. The format of the data is as follows: the file contains 100 blocks of lines. Each block
-contains several triples : (U, M, R), which means that user U gives R points to movie M. Please
-note that in the test file, if R=0, then you are expected to predict the best possible rating
-which user U will give movie M.
+# Report & Analysis
+ - https://docs.google.com/document/d/1-AWBewCmA6jTFSwf94Aso0yi0fNZjdfUoqtrrYlSFgo/
 
-ATTENTION: Please make the prediction block by block: every time when you are making
-predictions for user U, please assume that you ONLY know the knowledge of the training data
-(train.txt) and the existing 5 ratings for this user. In other words, please DO NOT use the
-knowledge of any other blocks in the test file when making predictions.
-The format of test10.txt and test20.txt is nearly the same as test5.txt, the only difference is that:
-in test10.txt, 10 ratings are given for a specific user; in test20.txt, 20 ratings are given for a
-specific user.
+## Background:
+In this project, I developed different algorithms to make recommendations for movies. There is a given training set with 200 users and 1000 movies. Movie ratings are on a scale for 1-5, and 0 means there was no rating given. Based on this training set, we should be able to provide ratings for new users given some of their movie preferences.
 
-## How to get the accuracy?
-To get the accuracy of your predictions, please submit the predicted ratings to our online system.
+## KNN
+This whole project is centered around K Nearest Neighbor. This is used in both Collaborative Filtering Algorithms. It gets a ranked list of the nearest users based on a metric. The two metrics used in this project was Cosine Similarity and Pearson Correlation. The final prediction is then calculated by performing a weighted average from the ranked list.  User based filtering is based on the assumption that similar users will rate similarly.
 
-# Types of Recommendation Engines
+## User Based Collaborative Filtering Algorithms
+ - Used Based Cosine Similarity: Cosine Similarity finds the angle between two vectors. It is also independent of vector length. The angle is used to compare how similar two vectors are. The range for Cosine Similarity is [0,1]. Note that we only care about the similarity between users that have rated the movie we are interested in making the prediction on. The pro of cosine similarity is the metric it provides to be able to compare users. Its weakness is its inability to differentiate between different dimensions. By this, I mean that it cannot recognize that [1,2,3] [1,2,3] is more similar that [1,2] [1,2]. Both sets of users produce a cosine similarity of 1. In addition, Cosine Similarity cannot handle one dimensional cases all comparisons between one dimensional vectors will have the same angle.
+ - Pearson: The problem with Cosine Similarity is that users may be different type of raters. One user may always give high ratings, and another low ratings. In Cosine Similarity, a rating of [7,8,9] is very different than [1,2,3] . However the correlation between these two vectors are very strong. In fact, these two ratings are the exact same if we look at the magnitude of the user’s ratings (subtracting the average). By doing this process, both vectors becomes[-1,0,1] The Pearson Coefficient finds how well two user’s ratings are correlated. The coefficient ranges from [-1,1]. We want to look at the absolute value of this coefficient and use that as our basis for similarity. The pro of the pearson correlation is its focus on correlation and trends. It can find similar user preferences even if their values are different. Another advantage of Pearson over Cosine Similarity is its ability to find inversely related correlations. These cases would have produced a low cosine similarity. The con of Pearson is still the inability to differentiate different dimensions and inability to handle one dimensional cases.
+ - IUF: IUF measures how important a movie is. This is useful in determining the similarity between users. If two users rate a unique movie (a movie that has very few ratings) similarly, the two users will have a higher user’s similarity. IUF allows us to weigh the value of the movies differently.
+ - Case Amplification: Case amplification is used to increase the weights of similar users and decrease the weights of less-similar users. This is so similar users will be valued more than those not-as-similar.
+ -  *Note: Fixing 1 Dimensional Cases: When comparing angles, the one dimensional case will always have the same angle. Therefore using cosine similarity on any one dimensional vector is not useful. For these cases I determine similarity by using the following equation:  Sim = 1| v1 - v2 | + 1.05      where 1.05 is used for smoothing. 1.05 is used because it will set a maximum threshold for the one dimensional similarity (best case is 1/1.05 = .95) This gives vectors with greater dimensions an advantage.
 
-## Case 1: Recommend the most Popular Items
- - the most popular items would be same for each user since popularity is defined on the entire user pool. So everybody will see the same results.
- - no personalization involved with this approach
- - There is division by section so user can look at the section of his interest.
- - At a time there are only a few hot topics and there is a high chance that a user wants to read the news which is being read by most others
- -
-## Case 2: Using a Classifer to make recommendation
- - Use Classification Algorithms to make recommendations.
-### Pros:
- - Incorporates personalization
- - It can work even if the user’s past history is short or not available
-### Cons:
- - The features might actually not be available or even if they are, they may not be sufficient to make a good classifier
- - As the number of users and items grow, making a good classifier will become exponentially difficult
+## Item-Based Collaborative Filtering Algorithm
+ - Adjusted Cosine Similarity: This process follows the same process as listed above in the Cosine Similarity for User Based Collaborative Filtering except for the main fact that we are comparing movies rather than users and we care about the magnitude of the rating based on the user who rated it. For every movie rating, before we calculate the cosine similarity, we subtract out the user average-movie-rating. This filtering algorithm depends on the following assumption: Movies that are similar will have similar rating
 
-## Case 3: Recommendation Algorithms
-### Content Based Algorthms
- - Idea: If you like an item then you will also like a “similar” item
- - Based on similarity of the items being recommended
+## Problems Discovered with above algorithms
+ - Dimensions - As mentioned above, the biggest problem with Cosine Similarity and Pearson is inability to compare its metric across different dimensions. If we had these two sets of users [1,2,3], [1,2,3]  and [1,2,3,4], [1,2,3,4], both sets will receive a Pearson Correlation and Cosine Similarity of 1.  However it is intuitive that the user [1,2,3,4] should be deemed “more closely related.” In addition, Pearson Correlation and Cosine Similarity will favor lower dimensional similarities. This is the major issue, and my custom algorithm will attempt to solve this problem.
 
-### Collaborative filtering algorithms:
- - Idea: If a person A likes item 1, 2, 3 and B like 2,3,4 then they have similar interests and A should like item 4 and B should like item 1.
- - This algorithm is entirely based on the past behavior and not on the context. This makes it one of the most commonly used algorithm as it is not dependent on any additional information.
+## Custom Algorithm
+ - Scale By Dimension: To ensure that all the top k users are not mostly one dimensional vectors, I multiply the final cosine value by the the log of the dimensional size. For example if the vector [2,2,2] and [2,3,4] were being compared, the cosine similarity of these two vectors will be multiplied by log(3) to get its final similarity. Of course, this method does not work with the one dimensional space as log(1) is 0, so I hardcode a fixed value for this case. However, after trials of changing the log base all the top k users were still vectors with large dimensions with relatively low similarity rates (before scaling). As a result, the error rate got worse as shown below.
+ - Manhattan Distance: Distance from Vector A to B going across one dimensional plane at a time. This metric is useful when dividing this distance by the number of dimensions in the two vectors. This results in the average distance across one dimensional plane. As such I created this equation to calculate similarity:  m = 1/(ManhattanDistance(V1,V2) + 1)where the +1 was used for smoothing. In addition, I created the condition where if two similarities were the same, the vector with more dimensions would be considered more similar. Although I had high hopes for this method, It did not produce favorable results.
+ - Top K Per Dimension: After the failure of the past two methods, I believed it was too difficult to compare vectors of different dimensions. As such, this method is under the assumption that we cannot compare similarities with vectors of different dimensions. I created a Top K for every dimension. The final result is a weighted average of each dimension’s result. The weight for each dimension is the sum of of the weight within the dimension. I implemented this concept for both User Based Pearson and Cosine Similarity. Surprisingly The Cosine Similarity Top K per Dimension did significantly better than the pearson version even though User Based Pearson had a lower error rate by itself. This Top K per Dimension with Cosine Similarity produced the best result that I got throughout this project.
 
-#### User-User Collaborative filtering:
- - Here we find look alike customers (based on similarity) and offer products which first customer’s look alike has chosen in past. This algorithm is very effective but takes a lot of time and resources. It requires to compute every customer pair information which takes time. Therefore, for big base platforms, this algorithm is hard to implement without a very strong parallelizable system.
-#### Item-Item Collaborative filtering:
- - It is quite similar to previous algorithm, but instead of finding customer look alike, we try finding item look alike. Once we have item look alike matrix, we can easily recommend alike items to customer who have purchased any item from the store. This algorithm is far less resource consuming than user-user collaborative filtering. Hence, for a new customer the algorithm takes far lesser time than user-user collaborate as we don’t need all similarity scores between customers. And with fixed number of products, product-product look alike matrix is fixed over time.
+
+
 

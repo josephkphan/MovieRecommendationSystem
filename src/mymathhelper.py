@@ -181,7 +181,7 @@ class MyMathHelper:
             # smaller_value = min(abs(v1[0]), abs(v2[0]))
             # bigger_value = max(abs(v1[0]), abs(v2[0]))  # todo Check when to return a negative number (for pearson)
             # value = 1.0 - (float(bigger_value) - float(smaller_value)) / 5
-            value = 1/(abs(v1[0] - v2[0])+1)
+            value = 1/(abs(float(v1[0]) - v2[0])+1.15)
             print 'Cos(1D): ', value
             # value_after_scale = value * .12
             # print 'Final Sim:',value_after_scale
@@ -196,7 +196,7 @@ class MyMathHelper:
                 sumyy += y * y
                 sumxy += x * y
             try:
-                value = sumxy / math.sqrt(sumxx * sumyy)  # Calculate Cosine Similarity
+                value = float(sumxy) / math.sqrt(sumxx * sumyy)  # Calculate Cosine Similarity
             except Exception, e:
                 print 'Error in custom_cosine_similarity:', e
                 value = 0.001  # Edge case when denominator is 0

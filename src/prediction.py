@@ -245,6 +245,7 @@ class Prediction:
                     continue
                 # weight = MyMathHelper.custom_case_deamplification(u[1])
                 weight =u[1]
+                # weight = MyMathHelper.custom_case_amplification(u[1])
                 movie_rating = u[2]
                 prediction[dimension] = prediction[dimension] + (weight * movie_rating)
                 denominator[dimension] = denominator[dimension] + weight
@@ -349,7 +350,7 @@ class Prediction:
                 if u == (0, 0, 0, 0, 0, 0, 0,0,0,0):
                     continue
                 weight = u[1]
-                # weight = MyMathHelper.custom_case_amplification(weight)
+                weight = MyMathHelper.custom_case_amplification(weight)
                 training_set_user_movie_score = u[2]
                 # training_set_user_avg = u[8]
                 # testing_user_avg = u[9]
