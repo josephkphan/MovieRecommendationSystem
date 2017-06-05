@@ -3,6 +3,7 @@
 ## Setup
  - run command 'python main.py' to run the program
  - Changing algorithm in the commented section inside main.py
+ - change K (top k nearest neighbors) in main.py
 
 # Report & Analysis
  - https://docs.google.com/document/d/1-AWBewCmA6jTFSwf94Aso0yi0fNZjdfUoqtrrYlSFgo/
